@@ -41,6 +41,16 @@ export class PollController {
     }
   }
 
+  async listPublicPolls(request: NextRequest) {
+    try {
+      const polls = await this.pollService.listPublicPolls();
+      return NextResponse.json({ polls });
+    } catch (err: any) {
+      const status = err.statusCode || 500;
+      return NextResponse.json({ error: err.message || 'Erro ao listar enquetes públicas.' }, { status });
+    }
+  }
+
   async getPollByCode(request: NextRequest, code: string) {
     try {
       const poll = await this.pollService.getPollByCode(code);

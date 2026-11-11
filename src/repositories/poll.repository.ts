@@ -134,6 +134,26 @@ export class PollRepository {
   }
 
   /**
+   * Lista enquetes abertas e públicas para visualização na landing page
+   */
+  async listPublicPolls(limit = 24): Promise<any[]> {
+    const supabase = await createServerSupabaseClient();
+
+    const { data: polls, error } = await supabase
+      .from('polls')
+      .select('id, title, description, code, status, require_name, created_at, poll_items(id, title), poll_votes(count)')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      throw new Error(`Falha ao listar enquetes públicas: ${error.message}`);
+    }
+
+    return polls || [];
+  }
+
+  /**
    * Atualiza os dados de uma enquete e opcionalmente seus itens
    */
   async update(id: string, data: UpdatePollDTO): Promise<Poll> {

@@ -78,6 +78,10 @@ export class PollService {
     return await this.pollRepository.listByAdminId(adminId);
   }
 
+  async listPublicPolls(): Promise<any[]> {
+    return await this.pollRepository.listPublicPolls();
+  }
+
   /**
    * Atualiza uma enquete (apenas o criador admin pode atualizar)
    */
