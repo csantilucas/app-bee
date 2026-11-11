@@ -78,7 +78,7 @@ export function LiveRankingList({ items, totalVotes }: LiveRankingListProps) {
             />
 
             <div className="relative z-10 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                 <span
                   className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs shrink-0 transition-transform duration-500 ${
                     isBoosted ? 'scale-110' : ''
@@ -86,9 +86,9 @@ export function LiveRankingList({ items, totalVotes }: LiveRankingListProps) {
                 >
                   {item.rank}º
                 </span>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white break-words whitespace-normal leading-snug">
                       {item.title}
                     </h4>
                     {isTied && (
@@ -97,7 +97,7 @@ export function LiveRankingList({ items, totalVotes }: LiveRankingListProps) {
                       </span>
                     )}
                     {isBoosted && (
-                      <span className="flex items-center gap-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 animate-bounce">
+                      <span className="flex items-center gap-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 animate-bounce shrink-0">
                         <TrendingUp className="w-3 h-3" />
                         <span>Subiu!</span>
                       </span>

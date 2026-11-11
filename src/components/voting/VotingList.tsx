@@ -58,10 +58,10 @@ export function VotingList({ items: initialItems, onSubmitVote, isSubmitting }: 
 
   return (
     <div className="w-full max-w-xl mx-auto flex flex-col gap-4 animate-fade-in">
-      <div className="bg-blue-50/80 dark:bg-indigo-950/30 border border-blue-200/80 dark:border-indigo-800/40 p-3.5 rounded-2xl flex items-center gap-3 text-slate-800 dark:text-indigo-200 text-xs sm:text-sm animate-slide-up">
-        <Sparkles className="w-5 h-5 shrink-0 text-[#3903b5] dark:text-indigo-400" />
-        <span>
-          <strong>Instrução:</strong> Organize as opções do <strong>1º ao último</strong> arrastando ou usando as setas. Sua 1ª opção ganha o maior número de pontos!
+      <div className="bg-blue-50/80 dark:bg-indigo-950/30 border border-blue-200/80 dark:border-indigo-800/40 p-3 sm:p-3.5 rounded-2xl flex items-center gap-2.5 sm:gap-3 text-slate-800 dark:text-indigo-200 text-xs sm:text-sm animate-slide-up">
+        <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-[#3903b5] dark:text-indigo-400" />
+        <span className="leading-snug">
+          <strong>Como votar:</strong> Ordene as opções do <strong>1º ao último</strong> arrastando ou tocando nas setas. A 1ª ganha mais pontos!
         </span>
       </div>
 
@@ -93,49 +93,53 @@ export function VotingList({ items: initialItems, onSubmitVote, isSubmitting }: 
               onDragStart={() => handleDragStart(index)}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
-              className={`flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 select-none hover:-translate-y-0.5 ${borderStyle} ${
+              className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl border transition-all duration-200 select-none hover:-translate-y-0.5 ${borderStyle} ${
                 draggedIndex === index ? 'opacity-50 scale-[0.98] border-dashed border-[#3903b5]' : 'hover:border-indigo-300'
               }`}
             >
-              <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 dark:text-slate-600 dark:hover:text-slate-400">
-                <GripVertical className="w-5 h-5" />
+              {/* Ícone de Arrastar (mais discreto em mobile) */}
+              <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 dark:text-slate-600 dark:hover:text-slate-400 shrink-0">
+                <GripVertical className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
 
+              {/* Badge de Posição (1º, 2º, 3º...) */}
               <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm shrink-0 transition-colors ${badgeColor}`}
+                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-xs sm:text-sm shrink-0 transition-colors ${badgeColor}`}
               >
-                {isFirst ? <Trophy className="w-4 h-4" /> : `${position}º`}
+                {isFirst ? <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : `${position}º`}
               </div>
 
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white truncate">
+              {/* Título e Descrição da Escolha - Quebra de texto fluida e sem truncar */}
+              <div className="flex-1 min-w-0 pr-1">
+                <h4 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white break-words whitespace-normal leading-snug">
                   {item.title}
                 </h4>
                 {item.description && (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 break-words whitespace-normal mt-0.5 leading-normal">
                     {item.description}
                   </p>
                 )}
               </div>
 
-              <div className="flex items-center gap-1 shrink-0">
+              {/* Botões de Subir / Descer Posição */}
+              <div className="flex flex-col sm:flex-row items-center gap-0.5 sm:gap-1 shrink-0">
                 <button
                   type="button"
                   onClick={() => moveUp(index)}
                   disabled={index === 0}
                   title="Subir posição"
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-[#3903b5] dark:text-slate-400 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                  className="p-1 sm:p-1.5 rounded-lg text-slate-500 hover:text-[#3903b5] dark:text-slate-400 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-20 disabled:cursor-not-allowed transition-colors cursor-pointer"
                 >
-                  <ChevronUp className="w-5 h-5" />
+                  <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
                 <button
                   type="button"
                   onClick={() => moveDown(index)}
                   disabled={index === items.length - 1}
                   title="Descer posição"
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-[#3903b5] dark:text-slate-400 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                  className="p-1 sm:p-1.5 rounded-lg text-slate-500 hover:text-[#3903b5] dark:text-slate-400 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-20 disabled:cursor-not-allowed transition-colors cursor-pointer"
                 >
-                  <ChevronDown className="w-5 h-5" />
+                  <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
             </div>
@@ -146,15 +150,15 @@ export function VotingList({ items: initialItems, onSubmitVote, isSubmitting }: 
       <button
         onClick={handleSubmit}
         disabled={isSubmitting}
-        className="w-full mt-3 py-4 px-6 bg-[#3903b5] hover:bg-[#2e0294] active:scale-[0.99] text-white font-bold rounded-2xl shadow-xl shadow-indigo-600/25 transition-all text-base flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+        className="w-full mt-3 py-3.5 sm:py-4 px-6 bg-[#3903b5] hover:bg-[#2e0294] active:scale-[0.99] text-white font-bold rounded-2xl shadow-xl shadow-indigo-600/25 transition-all text-sm sm:text-base flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
       >
         {isSubmitting ? (
-          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-        ) : (
           <>
-            <Trophy className="w-5 h-5" />
-            Confirmar e Enviar Meu Ranking
+            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            Enviando seu voto...
           </>
+        ) : (
+          'Confirmar e Enviar Voto'
         )}
       </button>
     </div>

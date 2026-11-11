@@ -50,7 +50,7 @@ export function LivePodium({ items }: LivePodiumProps) {
             <div className="flex flex-col gap-1 w-full items-center">
               {secondTier.map((item) => (
                 <div key={item.itemId} className="flex flex-col items-center">
-                  <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-2 max-w-[100px] sm:max-w-[140px] transition-colors">
+                  <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-3 break-words max-w-[105px] sm:max-w-[150px] transition-colors leading-tight">
                     {item.title}
                   </span>
                   <span className="text-[11px] sm:text-xs font-semibold text-[#3903b5] dark:text-indigo-400">
@@ -95,7 +95,7 @@ export function LivePodium({ items }: LivePodiumProps) {
             <div className="flex flex-col gap-1 w-full items-center">
               {firstTier.map((item) => (
                 <div key={item.itemId} className="flex flex-col items-center">
-                  <span className="text-xs sm:text-base font-extrabold text-slate-900 dark:text-white line-clamp-2 max-w-[110px] sm:max-w-[170px] transition-colors">
+                  <span className="text-xs sm:text-base font-extrabold text-slate-900 dark:text-white line-clamp-3 break-words max-w-[115px] sm:max-w-[180px] transition-colors leading-tight">
                     {item.title}
                   </span>
                   <span className="text-xs sm:text-sm font-bold text-[#3903b5] dark:text-indigo-400">
@@ -134,7 +134,7 @@ export function LivePodium({ items }: LivePodiumProps) {
             <div className="flex flex-col gap-1 w-full items-center">
               {thirdTier.map((item) => (
                 <div key={item.itemId} className="flex flex-col items-center">
-                  <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-2 max-w-[100px] sm:max-w-[140px] transition-colors">
+                  <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-3 break-words max-w-[105px] sm:max-w-[150px] transition-colors leading-tight">
                     {item.title}
                   </span>
                   <span className="text-[11px] sm:text-xs font-semibold text-[#3903b5] dark:text-indigo-400">
