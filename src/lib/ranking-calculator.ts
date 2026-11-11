@@ -77,10 +77,21 @@ export function calculateRankings(
     return a.title.localeCompare(b.title);
   });
 
-  // Atribuir o rank final
-  results.forEach((r, index) => {
-    r.rank = index + 1;
-  });
+  // Atribuir o rank final respeitando empates na pontuação total
+  for (let i = 0; i < results.length; i++) {
+    if (i === 0) {
+      results[0].rank = 1;
+    } else {
+      const prev = results[i - 1];
+      const curr = results[i];
+      // Se a pontuação for idêntica, ambos compartilham a mesma colocação
+      if (curr.totalScore === prev.totalScore) {
+        curr.rank = prev.rank;
+      } else {
+        curr.rank = i + 1;
+      }
+    }
+  }
 
   return results;
 }

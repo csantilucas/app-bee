@@ -121,4 +121,45 @@ export class VoteRepository {
 
     return items || [];
   }
+
+  /**
+   * Zera todos os votos registrados para uma determinada enquete
+   */
+  async deleteVotesByPollId(pollId: string): Promise<number> {
+    const supabase = await createServerSupabaseClient();
+
+    // 1. Obter IDs dos votos da enquete
+    const { data: votes, error: fetchErr } = await supabase
+      .from('poll_votes')
+      .select('id')
+      .eq('poll_id', pollId);
+
+    if (fetchErr) {
+      throw new Error(`Erro ao buscar votos para zerar: ${fetchErr.message}`);
+    }
+
+    if (!votes || votes.length === 0) {
+      return 0;
+    }
+
+    const voteIds = (votes as any[]).map((v: any) => v.id);
+
+    // 2. Apagar itens dos votos (garantindo limpeza mesmo sem cascade)
+    await supabase
+      .from('poll_vote_items')
+      .delete()
+      .in('vote_id', voteIds);
+
+    // 3. Apagar os votos
+    const { error: delError } = await supabase
+      .from('poll_votes')
+      .delete()
+      .eq('poll_id', pollId);
+
+    if (delError) {
+      throw new Error(`Erro ao excluir votos da enquete: ${delError.message}`);
+    }
+
+    return voteIds.length;
+  }
 }

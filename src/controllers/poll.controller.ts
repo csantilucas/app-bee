@@ -50,4 +50,55 @@ export class PollController {
       return NextResponse.json({ error: err.message || 'Erro ao buscar enquete.' }, { status });
     }
   }
+
+  async updatePoll(request: NextRequest, code: string, userId: string) {
+    try {
+      if (!userId) {
+        return NextResponse.json({ error: 'Você precisa estar logado como administrador.' }, { status: 401 });
+      }
+
+      const body = await request.json();
+      const updated = await this.pollService.updatePoll(code, userId, {
+        title: body.title,
+        description: body.description,
+        status: body.status,
+        requireName: body.requireName,
+        isPublicResults: body.isPublicResults,
+        items: body.items,
+      });
+
+      return NextResponse.json({ poll: updated });
+    } catch (err: any) {
+      const status = err.statusCode || 400;
+      return NextResponse.json({ error: err.message || 'Erro ao atualizar enquete.' }, { status });
+    }
+  }
+
+  async resetPollVotes(request: NextRequest, code: string, userId: string) {
+    try {
+      if (!userId) {
+        return NextResponse.json({ error: 'Você precisa estar logado como administrador.' }, { status: 401 });
+      }
+
+      const result = await this.pollService.resetPollVotes(code, userId);
+      return NextResponse.json(result);
+    } catch (err: any) {
+      const status = err.statusCode || 400;
+      return NextResponse.json({ error: err.message || 'Erro ao zerar votos da enquete.' }, { status });
+    }
+  }
+
+  async deletePoll(request: NextRequest, code: string, userId: string) {
+    try {
+      if (!userId) {
+        return NextResponse.json({ error: 'Você precisa estar logado como administrador.' }, { status: 401 });
+      }
+
+      const result = await this.pollService.deletePoll(code, userId);
+      return NextResponse.json(result);
+    } catch (err: any) {
+      const status = err.statusCode || 400;
+      return NextResponse.json({ error: err.message || 'Erro ao excluir enquete.' }, { status });
+    }
+  }
 }

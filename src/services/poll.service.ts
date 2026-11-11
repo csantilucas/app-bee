@@ -1,4 +1,5 @@
-import { PollRepository } from '@/repositories/poll.repository';
+import { PollRepository, UpdatePollDTO } from '@/repositories/poll.repository';
+import { VoteRepository } from '@/repositories/vote.repository';
 import { generatePollCode } from '@/lib/ranking-calculator';
 import { Poll, PollItem } from '@/types/poll';
 
@@ -12,7 +13,10 @@ export interface CreatePollInput {
 }
 
 export class PollService {
-  constructor(private pollRepository: PollRepository = new PollRepository()) {}
+  constructor(
+    private pollRepository: PollRepository = new PollRepository(),
+    private voteRepository: VoteRepository = new VoteRepository()
+  ) {}
 
   async createPoll(input: CreatePollInput): Promise<{ poll: Poll; items: PollItem[]; shareUrl: string }> {
     const { adminId, title, description, items, requireName = false, isPublicResults = true } = input;
@@ -72,5 +76,76 @@ export class PollService {
     }
 
     return await this.pollRepository.listByAdminId(adminId);
+  }
+
+  /**
+   * Atualiza uma enquete (apenas o criador admin pode atualizar)
+   */
+  async updatePoll(
+    code: string,
+    adminId: string,
+    data: UpdatePollDTO
+  ): Promise<Poll> {
+    if (!adminId) {
+      throw new Error('Administrador não autenticado.');
+    }
+
+    const poll = await this.getPollByCode(code);
+    if (poll.admin_id && poll.admin_id !== adminId) {
+      const err: any = new Error('Você não tem permissão para editar esta enquete.');
+      err.statusCode = 403;
+      throw err;
+    }
+
+    if (data.items && data.items.length < 2) {
+      throw new Error('A enquete precisa de no mínimo 2 opções.');
+    }
+
+    return await this.pollRepository.update(poll.id, data);
+  }
+
+  /**
+   * Zera todos os votos de uma enquete (apenas o criador admin pode zerar)
+   */
+  async resetPollVotes(code: string, adminId: string): Promise<{ message: string; votesDeleted: number }> {
+    if (!adminId) {
+      throw new Error('Administrador não autenticado.');
+    }
+
+    const poll = await this.getPollByCode(code);
+    if (poll.admin_id && poll.admin_id !== adminId) {
+      const err: any = new Error('Você não tem permissão para zerar esta enquete.');
+      err.statusCode = 403;
+      throw err;
+    }
+
+    const votesDeleted = await this.voteRepository.deleteVotesByPollId(poll.id);
+
+    return {
+      message: 'Votos da enquete zerados com sucesso.',
+      votesDeleted,
+    };
+  }
+
+  /**
+   * Exclui uma enquete permanentemente (apenas o criador admin pode excluir)
+   */
+  async deletePoll(code: string, adminId: string): Promise<{ message: string }> {
+    if (!adminId) {
+      throw new Error('Administrador não autenticado.');
+    }
+
+    const poll = await this.getPollByCode(code);
+    if (poll.admin_id && poll.admin_id !== adminId) {
+      const err: any = new Error('Você não tem permissão para excluir esta enquete.');
+      err.statusCode = 403;
+      throw err;
+    }
+
+    await this.pollRepository.delete(poll.id);
+
+    return {
+      message: 'Enquete e todos os dados associados foram excluídos com sucesso.',
+    };
   }
 }

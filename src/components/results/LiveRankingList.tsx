@@ -44,6 +44,7 @@ export function LiveRankingList({ items, totalVotes }: LiveRankingListProps) {
       {items.map((item) => {
         const percentage = Math.round((item.totalScore / maxScore) * 100);
         const isBoosted = recentlyUpdated[item.itemId];
+        const isTied = items.filter((i) => i.rank === item.rank).length > 1;
 
         let badgeStyle = 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
         let barColor = 'from-[#3903b5] to-indigo-500';
@@ -90,6 +91,11 @@ export function LiveRankingList({ items, totalVotes }: LiveRankingListProps) {
                     <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">
                       {item.title}
                     </h4>
+                    {isTied && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 rounded border border-amber-200 dark:border-amber-800 shrink-0">
+                        Empate
+                      </span>
+                    )}
                     {isBoosted && (
                       <span className="flex items-center gap-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 animate-bounce">
                         <TrendingUp className="w-3 h-3" />

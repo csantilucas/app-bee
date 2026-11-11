@@ -14,6 +14,10 @@ import {
   UserCheck,
   CheckCircle2,
   Sparkles,
+  Edit3,
+  RotateCcw,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -30,32 +34,37 @@ function DashboardContent() {
 
   const [selectedPollForQr, setSelectedPollForQr] = useState<{ title: string; code: string } | null>(null);
 
+  // Estados dos modais de confirmação
+  const [pollToReset, setPollToReset] = useState<{ code: string; title: string } | null>(null);
+  const [pollToDelete, setPollToDelete] = useState<{ code: string; title: string } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const loadPolls = async () => {
+    try {
+      const res = await fetch('/api/polls');
+      if (res.ok) {
+        const data = await res.json();
+        setPolls(data.polls || []);
+
+        if (createdCode && data.polls) {
+          const newlyCreated = data.polls.find((p: any) => p.code === createdCode);
+          if (newlyCreated) {
+            setSelectedPollForQr({ title: newlyCreated.title, code: newlyCreated.code });
+          }
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!sessionLoading && !session) {
       router.push('/admin/login');
       return;
-    }
-
-    async function loadPolls() {
-      if (!session) return;
-      try {
-        const res = await fetch('/api/polls');
-        if (res.ok) {
-          const data = await res.json();
-          setPolls(data.polls || []);
-
-          if (createdCode && data.polls) {
-            const newlyCreated = data.polls.find((p: any) => p.code === createdCode);
-            if (newlyCreated) {
-              setSelectedPollForQr({ title: newlyCreated.title, code: newlyCreated.code });
-            }
-          }
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
     }
 
     if (session) {
@@ -66,6 +75,54 @@ function DashboardContent() {
   const handleLogout = async () => {
     await signOut();
     router.push('/admin/login');
+  };
+
+  const handleResetVotes = async () => {
+    if (!pollToReset) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/polls/${pollToReset.code}/reset`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Erro ao zerar votos.');
+      }
+
+      setPolls((prev) =>
+        prev.map((p) => (p.code === pollToReset.code ? { ...p, poll_votes: [] } : p))
+      );
+      setToastMessage(`Votos da enquete "${pollToReset.title}" foram zerados com sucesso!`);
+      setTimeout(() => setToastMessage(null), 4000);
+      setPollToReset(null);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeletePoll = async () => {
+    if (!pollToDelete) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/polls/${pollToDelete.code}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Erro ao excluir enquete.');
+      }
+
+      setPolls((prev) => prev.filter((p) => p.code !== pollToDelete.code));
+      setToastMessage(`Enquete "${pollToDelete.title}" excluída com sucesso!`);
+      setTimeout(() => setToastMessage(null), 4000);
+      setPollToDelete(null);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   if (sessionLoading) {
@@ -120,7 +177,7 @@ function DashboardContent() {
               Minhas Enquetes
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-              Gerencie enquetes, gere QR Codes e abra telões de pódio ao vivo
+              Gerencie enquetes, edite opções, zere votos e acompanhe o ranking ao vivo
             </p>
           </div>
 
@@ -133,10 +190,17 @@ function DashboardContent() {
           </Link>
         </div>
 
+        {toastMessage && (
+          <div className="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center gap-2 text-emerald-800 dark:text-emerald-200 text-sm animate-scale-in">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+
         {createdCode && (
           <div className="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center justify-between text-emerald-800 dark:text-emerald-200 text-sm animate-scale-in">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>Enquete criada com sucesso! O QR Code já está pronto para compartilhar.</span>
             </div>
             <button
@@ -198,7 +262,11 @@ function DashboardContent() {
                             Anônima
                           </span>
                         )}
-                        <span className="text-[11px] font-semibold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-md">
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${
+                          poll.status === 'open'
+                            ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400'
+                        }`}>
                           {poll.status === 'open' ? 'Aberta' : 'Encerrada'}
                         </span>
                       </div>
@@ -226,32 +294,68 @@ function DashboardContent() {
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-3 gap-2">
-                    <button
-                      onClick={() => setSelectedPollForQr({ title: poll.title, code: poll.code })}
-                      className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
-                    >
-                      <QrCode className="w-3.5 h-3.5 text-[#3903b5]" />
-                      QR Code
-                    </button>
+                  <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5">
+                    {/* Linha 1: Ações Públicas (QR Code, Telão, Votar) */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={() => setSelectedPollForQr({ title: poll.title, code: poll.code })}
+                        className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                        title="Ver QR Code"
+                      >
+                        <QrCode className="w-3.5 h-3.5 text-[#3903b5]" />
+                        QR Code
+                      </button>
 
-                    <Link
-                      href={`/p/${poll.code}/results`}
-                      target="_blank"
-                      className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-blue-50/60 dark:bg-indigo-950/30 hover:bg-blue-100 text-xs font-semibold text-[#3903b5] dark:text-indigo-300 transition-colors"
-                    >
-                      <Trophy className="w-3.5 h-3.5" />
-                      Telão
-                    </Link>
+                      <Link
+                        href={`/p/${poll.code}/results`}
+                        target="_blank"
+                        className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-blue-50/60 dark:bg-indigo-950/30 hover:bg-blue-100 text-xs font-semibold text-[#3903b5] dark:text-indigo-300 transition-colors"
+                        title="Abrir Telão ao Vivo"
+                      >
+                        <Trophy className="w-3.5 h-3.5" />
+                        Telão
+                      </Link>
 
-                    <Link
-                      href={`/p/${poll.code}`}
-                      target="_blank"
-                      className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      Votar
-                    </Link>
+                      <Link
+                        href={`/p/${poll.code}`}
+                        target="_blank"
+                        className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors"
+                        title="Abrir link de votação"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        Votar
+                      </Link>
+                    </div>
+
+                    {/* Linha 2: Ações Administrativas (Editar, Zerar, Excluir) */}
+                    <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                      <Link
+                        href={`/admin/polls/${poll.code}/edit`}
+                        className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-[11px] font-semibold text-slate-600 dark:text-slate-300 transition-colors"
+                        title="Editar enquete e opções"
+                      >
+                        <Edit3 className="w-3 h-3 text-slate-500" />
+                        Editar
+                      </Link>
+
+                      <button
+                        onClick={() => setPollToReset({ code: poll.code, title: poll.title })}
+                        className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950/30 text-[11px] font-semibold text-amber-700 dark:text-amber-400 transition-colors cursor-pointer"
+                        title="Zerar todos os votos desta enquete"
+                      >
+                        <RotateCcw className="w-3 h-3 text-amber-600" />
+                        Zerar Votos
+                      </button>
+
+                      <button
+                        onClick={() => setPollToDelete({ code: poll.code, title: poll.title })}
+                        className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 text-[11px] font-semibold text-rose-600 dark:text-rose-400 transition-colors cursor-pointer"
+                        title="Excluir enquete permanentemente"
+                      >
+                        <Trash2 className="w-3 h-3 text-rose-500" />
+                        Excluir
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -260,6 +364,7 @@ function DashboardContent() {
         )}
       </main>
 
+      {/* Modal QR Code */}
       {selectedPollForQr && (
         <QrCodeModal
           isOpen={Boolean(selectedPollForQr)}
@@ -267,6 +372,84 @@ function DashboardContent() {
           title={selectedPollForQr.title}
           code={selectedPollForQr.code}
         />
+      )}
+
+      {/* Modal de Confirmação: Zerar Votos */}
+      {pollToReset && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl animate-scale-in">
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4">
+              <RotateCcw className="w-6 h-6" />
+            </div>
+
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              Zerar votos da enquete?
+            </h3>
+            <p className="text-sm text-slate-500 mt-2">
+              Você está prestes a apagar todos os votos registrados para{' '}
+              <strong className="text-slate-900 dark:text-white">
+                &quot;{pollToReset.title}&quot;
+              </strong>
+              . O ranking ao vivo voltará a zero e os participantes poderão votar novamente.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <button
+                onClick={() => setPollToReset(null)}
+                disabled={actionLoading}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleResetVotes}
+                disabled={actionLoading}
+                className="flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-amber-600/25 cursor-pointer disabled:opacity-50"
+              >
+                {actionLoading ? 'Zerando...' : 'Sim, Zerar Votos'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação: Excluir Enquete */}
+      {pollToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl animate-scale-in">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4">
+              <Trash2 className="w-6 h-6" />
+            </div>
+
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              Excluir enquete permanentemente?
+            </h3>
+            <p className="text-sm text-slate-500 mt-2">
+              A enquete{' '}
+              <strong className="text-slate-900 dark:text-white">
+                &quot;{pollToDelete.title}&quot;
+              </strong>{' '}
+              e todo o seu histórico de votos e opções serão removidos do banco de dados. Esta ação não pode ser desfeita.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <button
+                onClick={() => setPollToDelete(null)}
+                disabled={actionLoading}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeletePoll}
+                disabled={actionLoading}
+                className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-rose-600/25 cursor-pointer disabled:opacity-50"
+              >
+                {actionLoading ? 'Excluindo...' : 'Sim, Excluir'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
