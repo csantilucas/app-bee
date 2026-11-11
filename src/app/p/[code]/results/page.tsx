@@ -88,7 +88,13 @@ function LiveResultsContent() {
       )
       .subscribe();
 
+    // Fallback de polling a cada 6 segundos para redundância total
+    const fallbackTimer = setInterval(() => {
+      fetchResults(false);
+    }, 6000);
+
     return () => {
+      clearInterval(fallbackTimer);
       supabase.removeChannel(channel);
     };
   }, [data?.poll?.id, fetchResults]);
