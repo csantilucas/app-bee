@@ -90,7 +90,7 @@ function DashboardContent() {
       }
 
       setPolls((prev) =>
-        prev.map((p) => (p.code === pollToReset.code ? { ...p, poll_votes: [] } : p))
+        prev.map((p) => (p.code === pollToReset.code ? { ...p, poll_votes: [{ count: 0 }] } : p))
       );
       setToastMessage(`Votos da enquete "${pollToReset.title}" foram zerados com sucesso!`);
       setTimeout(() => setToastMessage(null), 4000);
@@ -238,7 +238,12 @@ function DashboardContent() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {polls.map((poll) => {
-              const voteCount = poll.poll_votes ? poll.poll_votes.length : 0;
+              const voteCount =
+                Array.isArray(poll.poll_votes) && poll.poll_votes.length > 0 && typeof poll.poll_votes[0]?.count === 'number'
+                  ? poll.poll_votes[0].count
+                  : Array.isArray(poll.poll_votes)
+                  ? poll.poll_votes.length
+                  : 0;
               const itemCount = poll.poll_items ? poll.poll_items.length : 0;
 
               return (

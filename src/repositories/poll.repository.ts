@@ -241,12 +241,21 @@ export class PollRepository {
 
     if (votes && votes.length > 0) {
       const voteIds = (votes as any[]).map((v: any) => v.id);
-      await supabase.from('poll_vote_items').delete().in('vote_id', voteIds);
-      await supabase.from('poll_votes').delete().eq('poll_id', id);
+      const { error: delViErr } = await supabase.from('poll_vote_items').delete().in('vote_id', voteIds);
+      if (delViErr) {
+        throw new Error(`Falha ao excluir itens dos votos: ${delViErr.message}`);
+      }
+      const { error: delVErr } = await supabase.from('poll_votes').delete().eq('poll_id', id);
+      if (delVErr) {
+        throw new Error(`Falha ao excluir votos: ${delVErr.message}`);
+      }
     }
 
     // 2. Apagar itens da enquete
-    await supabase.from('poll_items').delete().eq('poll_id', id);
+    const { error: delItemsErr } = await supabase.from('poll_items').delete().eq('poll_id', id);
+    if (delItemsErr) {
+      throw new Error(`Falha ao excluir opções da enquete: ${delItemsErr.message}`);
+    }
 
     // 3. Apagar a enquete
     const { error } = await supabase.from('polls').delete().eq('id', id);

@@ -199,7 +199,12 @@ export default function HomePage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
               {polls.map((poll) => {
-                const voteCount = poll.poll_votes ? poll.poll_votes.length : 0;
+                const voteCount =
+                  Array.isArray(poll.poll_votes) && poll.poll_votes.length > 0 && typeof poll.poll_votes[0]?.count === 'number'
+                    ? poll.poll_votes[0].count
+                    : Array.isArray(poll.poll_votes)
+                    ? poll.poll_votes.length
+                    : 0;
                 const itemCount = poll.poll_items ? poll.poll_items.length : 0;
 
                 return (

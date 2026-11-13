@@ -125,10 +125,62 @@ async function run() {
 
   console.log('   ✅ Administrador criado com sucesso!');
 
+  console.log('\n4. Criando enquete "Ranking às cegas"...');
+  const pollId = crypto.randomUUID();
+  const pollCode = 'CEGAS-01';
+
+  const { error: pollError } = await supabase.from('polls').insert({
+    id: pollId,
+    admin_id: userId,
+    title: 'Ranking às cegas',
+    description: 'Ordene os itens de acordo com a sua preferência do 1º ao último.',
+    code: pollCode,
+    status: 'open',
+    require_name: false,
+    is_public_results: true,
+    created_at: now,
+    updated_at: now,
+  });
+
+  if (pollError) {
+    console.error('❌ Erro ao criar enquete:', pollError.message);
+    process.exit(1);
+  }
+
+  const questions = [
+    'Fotos de AI de boa sorte do enem',
+    'Prova do 3° bimeste',
+    'Fechar as contas das mensalidades e lucros para a formatura',
+    'Prejuizo com picoles e bombons',
+    'Fazer simulados aos sábados',
+    'Fiscalização dos simulados',
+  ];
+
+  const itemsToInsert = questions.map((title, index) => ({
+    id: crypto.randomUUID(),
+    poll_id: pollId,
+    title,
+    initial_order: index,
+    created_at: now,
+  }));
+
+  const { error: itemsError } = await supabase.from('poll_items').insert(itemsToInsert);
+  if (itemsError) {
+    console.error('❌ Erro ao inserir opções da enquete:', itemsError.message);
+    process.exit(1);
+  }
+
+  console.log(`   ✅ Enquete "Ranking às cegas" (${pollCode}) criada com ${questions.length} opções!`);
+
   console.log('\n======================================================');
   console.log('🎉 SEED CONCLUÍDO COM SUCESSO! 🐝');
   console.log('======================================================');
-  console.log('Credenciais para login no painel de administração:');
+  console.log('Enquete criada:');
+  console.log(`   - Título: Ranking às cegas`);
+  console.log(`   - Código: ${pollCode}`);
+  console.log(`   - Votar:  http://localhost:3000/p/${pollCode}`);
+  console.log(`   - Telão:  http://localhost:3000/p/${pollCode}/results`);
+  console.log('\nCredenciais para login no painel de administração:');
   console.log(`   - Painel: http://localhost:3000/admin/login`);
   console.log(`   - E-mail: ${adminEmail}`);
   console.log(`   - Senha:  ${adminPassword}`);

@@ -37,7 +37,7 @@ function LiveResultsContent() {
     if (isRealtimeTrigger) setIsUpdating(true);
 
     try {
-      const res = await fetch(`/api/polls/${code}/results`);
+      const res = await fetch(`/api/polls/${code}/results`, { cache: 'no-store' });
       if (!res.ok) {
         const errJson = await res.json();
         throw new Error(errJson.error || 'Falha ao carregar resultados');
@@ -77,13 +77,13 @@ function LiveResultsContent() {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'poll_votes',
           filter: `poll_id=eq.${data.poll.id}`,
         },
-        () => {
-          fetchResults(true);
+        (payload) => {
+          fetchResults(payload.eventType === 'INSERT');
         }
       )
       .subscribe();

@@ -145,10 +145,14 @@ export class VoteRepository {
     const voteIds = (votes as any[]).map((v: any) => v.id);
 
     // 2. Apagar itens dos votos (garantindo limpeza mesmo sem cascade)
-    await supabase
+    const { error: delItemsErr } = await supabase
       .from('poll_vote_items')
       .delete()
       .in('vote_id', voteIds);
+
+    if (delItemsErr) {
+      throw new Error(`Erro ao excluir itens dos votos: ${delItemsErr.message}`);
+    }
 
     // 3. Apagar os votos
     const { error: delError } = await supabase
